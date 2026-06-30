@@ -440,6 +440,14 @@ nav {
   margin: 0 0 1.2em;
 }
 
+.content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+  border-radius: 18px;
+}
+
 .footer {
   margin-top: 40px;
   color: var(--muted);

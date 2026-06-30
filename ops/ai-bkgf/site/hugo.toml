@@ -15,3 +15,6 @@ enableRobotsTXT = true
 
 [outputs]
   home = ["html", "rss", "searchindex"]
+
+[markup.goldmark.renderer]
+  hardWraps = true
