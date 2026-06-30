@@ -1,23 +1,117 @@
 {{ define "main" }}
 {{ $posts := where site.RegularPages "Section" "news" }}
-<section class="intro">
-  <p class="eyebrow">精选 AI 教程与实战</p>
-  <h1>帮你更快用好 AI</h1>
-  <p class="lead">从入门方法到实战案例，持续更新适合简体中文用户的 AI 教程、工具和工作流。</p>
+{{ $latest := first 6 ($posts.ByPublishDate.Reverse) }}
+<section class="home-hero">
+  <div class="home-hero__copy">
+    <p class="eyebrow">简体中文 AI 学习站</p>
+    <h1>零基础也能看懂的 AI 教程与实战指南</h1>
+    <p class="lead">这里不做空泛资讯，主要按入门、提效、工具选择三条路线整理内容，让普通用户也能一步步把 AI 真正用起来。</p>
+    <div class="hero-actions">
+      <a class="button button--primary" href="#search-panel">立即搜索教程</a>
+      <a class="button button--secondary" href="/news/">进入文章库</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <strong>零基础友好</strong>
+        <span>先讲怎么上手，再讲怎么提效</span>
+      </div>
+      <div class="hero-stat">
+        <strong>中文场景</strong>
+        <span>更贴近日常办公、内容和副业需求</span>
+      </div>
+      <div class="hero-stat">
+        <strong>少走弯路</strong>
+        <span>优先整理能马上复用的方法和工具</span>
+      </div>
+    </div>
+  </div>
+  <aside class="home-hero__aside">
+    <div class="spotlight">
+      <p class="spotlight__label">建议学习顺序</p>
+      <h2>先按这 3 步开始学</h2>
+      <div class="spotlight__grid">
+        <article class="spotlight-card">
+          <span class="spotlight-card__step">01</span>
+          <h3>先学会怎么问 AI</h3>
+          <p>先把提示词结构、提问方式和高频误区摸清，后面学什么都会轻松很多。</p>
+        </article>
+        <article class="spotlight-card">
+          <span class="spotlight-card__step">02</span>
+          <h3>再学会怎么提效</h3>
+          <p>围绕办公、写作、内容整理这些高频场景，优先学能直接复用的工作流。</p>
+        </article>
+        <article class="spotlight-card">
+          <span class="spotlight-card__step">03</span>
+          <h3>最后再学怎么选工具</h3>
+          <p>不同场景适合不同工具，先理解差异，再决定买什么、用什么，避免花冤枉钱。</p>
+        </article>
+      </div>
+    </div>
+  </aside>
 </section>
-<section class="search-panel" data-search>
-  <label class="search-label" for="search-input">搜索文章</label>
+
+<section class="learn-map">
+  <article class="path-card">
+    <p class="path-card__eyebrow">学习路径一</p>
+    <h2>从零开始学会和 AI 对话</h2>
+    <p>如果你刚接触 AI，建议先从提问结构、提示词模板和常见误区开始，这会决定后面所有使用体验。</p>
+    <a class="path-card__link" href="#search-panel">先搜入门内容</a>
+  </article>
+  <article class="path-card">
+    <p class="path-card__eyebrow">学习路径二</p>
+    <h2>把 AI 用进日常工作和内容生产</h2>
+    <p>围绕办公提效、文案写作、信息整理和内容创作，逐步找到真正能帮你省时间的做法。</p>
+    <a class="path-card__link" href="/news/">查看实战文章</a>
+  </article>
+  <article class="path-card">
+    <p class="path-card__eyebrow">学习路径三</p>
+    <h2>少踩坑地选择工具和服务</h2>
+    <p>等你知道自己要解决什么问题，再看模型、工具和付费服务，决策会更稳，也更省钱。</p>
+    <a class="path-card__link" href="https://bkgf.net/" target="_blank" rel="noreferrer">看看配套服务</a>
+  </article>
+</section>
+
+<section class="quick-entry">
+  <a class="entry-card" href="#search-panel">
+    <p class="entry-card__eyebrow">快速开始</p>
+    <h2>搜索文章</h2>
+    <p>按标题、摘要和关键词快速找到你现在最需要的教程。</p>
+  </a>
+  <a class="entry-card" href="https://bkgf.net/" target="_blank" rel="noreferrer">
+    <p class="entry-card__eyebrow">配套服务</p>
+    <h2>会员商城</h2>
+    <p>如果你需要更完整的服务或产品支持，可以直接前往商城查看。</p>
+  </a>
+  <a class="entry-card" href="https://aicdk.bkgf.net/" target="_blank" rel="noreferrer">
+    <p class="entry-card__eyebrow">常用入口</p>
+    <h2>充值中心</h2>
+    <p>需要购买或补充额度时，可以直接跳转到充值中心处理。</p>
+  </a>
+</section>
+
+<section id="search-panel" class="search-panel" data-search>
+  <label class="search-label" for="search-input">想学什么，直接搜</label>
   <input id="search-input" class="search-input" type="search" placeholder="搜索标题、摘要、关键词" autocomplete="off">
-  <p class="search-hint">输入关键词后会实时筛选全部已发布文章。</p>
+  <p class="search-hint">支持搜索工具名、问题场景、文章标题和摘要，输入后会实时筛选全部已发布文章。</p>
   <div id="search-results" class="cards search-results" hidden></div>
 </section>
-<section class="cards">
-  {{ range first 12 ($posts.ByPublishDate.Reverse) }}
+
+<section class="home-section">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">最新教程</p>
+      <h2>先从这些内容开始</h2>
+    </div>
+    <a class="section-link" href="/news/">查看全部文章</a>
+  </div>
+  <section class="cards">
+  {{ range $latest }}
   <article class="card">
     <p class="meta">{{ .PublishDate.Format "2006-01-02 15:04" }}</p>
     <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
     <p>{{ with .Description }}{{ . }}{{ else }}{{ .Summary | plainify }}{{ end }}</p>
   </article>
   {{ end }}
+  </section>
 </section>
 {{ end }}

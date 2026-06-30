@@ -1,7 +1,7 @@
 baseURL = "https://ai.bkgf.net/"
 defaultContentLanguage = "zh"
 locale = "zh-CN"
-title = "一枝AI教程"
+title = "一桉AI教程"
 enableRobotsTXT = true
 
 [pagination]
