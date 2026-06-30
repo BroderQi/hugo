@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} | {{ site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ site.Params.description }}{{ end }}">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <a class="brand" href="/">AI 文章</a>
+      <nav>
+        <a href="/">首页</a>
+        <a href="/news/">文章</a>
+      </nav>
+    </header>
+    <main>
+      {{ block "main" . }}{{ end }}
+    </main>
+    <footer class="footer">
+      <p>ai.bkgf.net</p>
+    </footer>
+  </div>
+</body>
+</html>

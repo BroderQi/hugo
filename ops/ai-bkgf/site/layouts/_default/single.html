@@ -1,0 +1,9 @@
+{{ define "main" }}
+<article class="post">
+  <a class="back" href="/news/">返回文章列表</a>
+  <p class="meta">{{ .PublishDate.Format "2006-01-02 15:04" }}</p>
+  <h1>{{ .Title }}</h1>
+  {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+  <div class="content">{{ .Content }}</div>
+</article>
+{{ end }}

@@ -1,0 +1,8 @@
+baseURL = "https://ai.bkgf.net/"
+defaultContentLanguage = "zh"
+locale = "zh-CN"
+title = "AI 文章"
+enableRobotsTXT = true
+
+[pagination]
+  pagerSize = 12

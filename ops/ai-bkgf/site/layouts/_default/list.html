@@ -1,0 +1,16 @@
+{{ define "main" }}
+<section class="intro compact">
+  <p class="eyebrow">文章归档</p>
+  <h1>{{ .Title }}</h1>
+  <p class="lead">{{ with .Description }}{{ . }}{{ else }}按时间倒序展示全部文章。{{ end }}</p>
+</section>
+<section class="cards">
+  {{ range .Pages.ByPublishDate.Reverse }}
+  <article class="card">
+    <p class="meta">{{ .PublishDate.Format "2006-01-02 15:04" }}</p>
+    <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+    <p>{{ with .Description }}{{ . }}{{ else }}{{ .Summary | plainify }}{{ end }}</p>
+  </article>
+  {{ end }}
+</section>
+{{ end }}

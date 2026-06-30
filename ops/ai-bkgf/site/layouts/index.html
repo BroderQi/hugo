@@ -1,0 +1,17 @@
+{{ define "main" }}
+{{ $posts := where site.RegularPages "Section" "news" }}
+<section class="intro">
+  <p class="eyebrow">面向简体中文用户</p>
+  <h1>AI 文章首页</h1>
+  <p class="lead">这里展示最近发布的文章，后台入口保留在 <code>/admin/</code>。</p>
+</section>
+<section class="cards">
+  {{ range first 12 ($posts.ByPublishDate.Reverse) }}
+  <article class="card">
+    <p class="meta">{{ .PublishDate.Format "2006-01-02 15:04" }}</p>
+    <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+    <p>{{ with .Description }}{{ . }}{{ else }}{{ .Summary | plainify }}{{ end }}</p>
+  </article>
+  {{ end }}
+</section>
+{{ end }}
