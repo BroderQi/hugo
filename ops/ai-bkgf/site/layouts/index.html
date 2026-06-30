@@ -1,9 +1,15 @@
 {{ define "main" }}
 {{ $posts := where site.RegularPages "Section" "news" }}
 <section class="intro">
-  <p class="eyebrow">面向简体中文用户</p>
-  <h1>AI 文章首页</h1>
-  <p class="lead">这里展示最近发布的文章，后台入口保留在 <code>/admin/</code>。</p>
+  <p class="eyebrow">精选 AI 教程与实战</p>
+  <h1>帮你更快用好 AI</h1>
+  <p class="lead">从入门方法到实战案例，持续更新适合简体中文用户的 AI 教程、工具和工作流。</p>
+</section>
+<section class="search-panel" data-search>
+  <label class="search-label" for="search-input">搜索文章</label>
+  <input id="search-input" class="search-input" type="search" placeholder="搜索标题、摘要、关键词" autocomplete="off">
+  <p class="search-hint">输入关键词后会实时筛选全部已发布文章。</p>
+  <div id="search-results" class="cards search-results" hidden></div>
 </section>
 <section class="cards">
   {{ range first 12 ($posts.ByPublishDate.Reverse) }}

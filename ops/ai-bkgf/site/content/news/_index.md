@@ -1,4 +1,4 @@
 +++
 title = "文章"
-description = "公开发布的文章都会展示在这里。"
+description = "这里收录全部公开发布的 AI 教程与实战文章。"
 +++

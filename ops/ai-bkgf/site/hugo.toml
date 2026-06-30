@@ -1,8 +1,17 @@
 baseURL = "https://ai.bkgf.net/"
 defaultContentLanguage = "zh"
 locale = "zh-CN"
-title = "AI 文章"
+title = "一枝AI教程"
 enableRobotsTXT = true
 
 [pagination]
   pagerSize = 12
+
+[outputFormats.searchindex]
+  mediaType = "application/json"
+  baseName = "search-index"
+  isPlainText = true
+  notAlternative = true
+
+[outputs]
+  home = ["html", "rss", "searchindex"]

@@ -1,0 +1,12 @@
+{{- $pages := where site.RegularPages "Section" "news" -}}
+[
+{{- range $i, $p := $pages.ByPublishDate.Reverse -}}
+  {{- if gt $i 0 }},{{ end }}
+  {
+    "title": {{ $p.Title | jsonify }},
+    "permalink": {{ $p.RelPermalink | jsonify }},
+    "description": {{ (or $p.Description ($p.Summary | plainify)) | jsonify }},
+    "date": {{ $p.PublishDate.Format "2006-01-02 15:04" | jsonify }}
+  }
+{{- end -}}
+]
