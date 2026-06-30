@@ -1,6 +1,9 @@
 {{ define "main" }}
 {{ $posts := where site.RegularPages "Section" "news" }}
-{{ $latest := first 6 ($posts.ByPublishDate.Reverse) }}
+{{ $pinned := where $posts "Params.pinned" true }}
+{{ $regular := where $posts "Params.pinned" "ne" true }}
+{{ $ordered := $pinned.ByPublishDate.Reverse | append ($regular.ByPublishDate.Reverse) }}
+{{ $latest := first 6 $ordered }}
 <section class="home-hero">
   <div class="home-hero__copy">
     <p class="eyebrow">简体中文 AI 学习站</p>

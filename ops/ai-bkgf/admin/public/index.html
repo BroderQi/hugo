@@ -48,8 +48,24 @@
       background: white;
       cursor: pointer;
     }
+    .post-item--pinned {
+      border-color: rgba(15, 118, 110, 0.35);
+      background: linear-gradient(180deg, #ffffff, #f2fbfa);
+    }
     .post-item strong { display: block; margin-bottom: 6px; }
     .meta { font-size: .85rem; color: var(--muted); }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+    .check input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--accent);
+    }
     label { display: block; font-size: .92rem; margin: 0 0 6px; color: var(--muted); }
     input, textarea {
       width: 100%;
@@ -133,6 +149,12 @@
             <input id="description">
           </div>
         </div>
+        <div class="field">
+          <label class="check" for="pinned">
+            <input id="pinned" type="checkbox">
+            <span>置顶文章</span>
+          </label>
+        </div>
         <div class="field upload">
           <label>图片上传</label>
           <div class="actions">
@@ -164,6 +186,7 @@
       slug: document.getElementById('slug'),
       date: document.getElementById('date'),
       description: document.getElementById('description'),
+      pinned: document.getElementById('pinned'),
       body: document.getElementById('body'),
       imageInput: document.getElementById('imageInput'),
       imageHint: document.getElementById('imageHint'),
@@ -192,6 +215,7 @@
       els.slug.value = '';
       els.date.value = defaultDate();
       els.description.value = '';
+      els.pinned.checked = false;
       els.body.value = '';
       els.imageInput.value = '';
       els.imageHint.textContent = '支持 png/jpg/webp/gif/svg。上传后会自动把图片链接插入正文光标位置。';
@@ -242,8 +266,8 @@
       }
       for (const item of items) {
         const div = document.createElement('div');
-        div.className = 'post-item';
-        div.innerHTML = `<strong>${item.title}</strong><div class="meta">${item.date || ''}</div><div class="meta">/${item.slug}/</div>`;
+        div.className = `post-item${item.pinned ? ' post-item--pinned' : ''}`;
+        div.innerHTML = `<strong>${item.pinned ? '置顶 · ' : ''}${item.title}</strong><div class="meta">${item.date || ''}</div><div class="meta">/${item.slug}/</div>`;
         div.onclick = () => loadPost(item.slug);
         els.posts.appendChild(div);
       }
@@ -264,6 +288,7 @@
       els.slug.value = data.slug || '';
       els.date.value = data.date || '';
       els.description.value = data.description || '';
+      els.pinned.checked = Boolean(data.pinned);
       els.body.value = data.body || '';
       setLog(`已加载 ${slug}`);
     }
@@ -275,6 +300,7 @@
         title: els.title.value.trim(),
         date: els.date.value.trim(),
         description: els.description.value.trim(),
+        pinned: els.pinned.checked,
         body: els.body.value
       };
       const data = await req('./api/posts', {

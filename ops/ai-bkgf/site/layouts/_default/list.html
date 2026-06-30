@@ -1,4 +1,7 @@
 {{ define "main" }}
+{{ $pinned := where .Pages "Params.pinned" true }}
+{{ $regular := where .Pages "Params.pinned" "ne" true }}
+{{ $pages := $pinned.ByPublishDate.Reverse | append ($regular.ByPublishDate.Reverse) }}
 <section class="intro compact">
   <p class="eyebrow">全部文章</p>
   <h1>{{ .Title }}</h1>
@@ -11,7 +14,7 @@
   <div id="search-results" class="cards search-results" hidden></div>
 </section>
 <section class="cards">
-  {{ range .Pages.ByPublishDate.Reverse }}
+  {{ range $pages }}
   <article class="card">
     <p class="meta">{{ .PublishDate.Format "2006-01-02 15:04" }}</p>
     <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>

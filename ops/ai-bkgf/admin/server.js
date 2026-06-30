@@ -70,7 +70,7 @@ function encodeValue(v) {
 }
 
 function parsePost(raw) {
-  const data = { title: '', description: '', date: '', draft: false, body: raw };
+  const data = { title: '', description: '', date: '', draft: false, pinned: false, body: raw };
   if (!raw.startsWith('+++' + nl)) {
     return data;
   }
@@ -102,6 +102,7 @@ function renderPost(data) {
     `title = ${encodeValue(data.title)}`,
     `description = ${encodeValue(data.description)}`,
     `date = ${encodeValue(data.date)}`,
+    `pinned = ${encodeValue(Boolean(data.pinned))}`,
     'draft = false',
     '+++',
     '',
@@ -130,9 +131,14 @@ async function listPosts() {
       title: parsed.title || slug,
       date: parsed.date || '',
       description: parsed.description || '',
+      pinned: Boolean(parsed.pinned),
     });
   }
-  posts.sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.slug.localeCompare(b.slug));
+  posts.sort((a, b) =>
+    Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) ||
+    (b.date || '').localeCompare(a.date || '') ||
+    a.slug.localeCompare(b.slug),
+  );
   return posts;
 }
 
@@ -243,6 +249,7 @@ const server = createServer(async (req, res) => {
         title: (data.title || '').trim(),
         description: (data.description || '').trim(),
         date: (data.date || '').trim() || new Date().toISOString(),
+        pinned: Boolean(data.pinned),
         body: data.body || '',
       };
       await fs.writeFile(path.join(postsDir, `${slug}.md`), renderPost(post), 'utf8');
