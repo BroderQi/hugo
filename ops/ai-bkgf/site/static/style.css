@@ -442,10 +442,17 @@ nav {
 
 .content img {
   display: block;
-  max-width: 100%;
+  max-width: min(100%, calc(100vw - 88px));
   height: auto;
   margin: 1.5rem auto;
   border-radius: 18px;
+}
+
+.content li > img,
+.content p > img,
+.content figure,
+.content picture {
+  max-width: 100%;
 }
 
 .footer {
