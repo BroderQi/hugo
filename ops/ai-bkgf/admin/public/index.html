@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 文章后台</title>
+  <style>
+    :root {
+      --bg: #f4efe4;
+      --panel: #fffdf8;
+      --line: #d8d0c2;
+      --text: #20262d;
+      --muted: #68727d;
+      --accent: #0f766e;
+      --accent-soft: #d9f1ee;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #faf7f1, var(--bg));
+      color: var(--text);
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .top h1 { margin: 0; font-size: 1.8rem; }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .06);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 1rem; }
+    .posts { display: grid; gap: 10px; }
+    .post-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: white;
+      cursor: pointer;
+    }
+    .post-item strong { display: block; margin-bottom: 6px; }
+    .meta { font-size: .85rem; color: var(--muted); }
+    label { display: block; font-size: .92rem; margin: 0 0 6px; color: var(--muted); }
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+      background: white;
+    }
+    textarea { min-height: 320px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { margin-bottom: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .primary { background: var(--accent); color: white; }
+    .ghost { background: #e8ecef; color: var(--text); }
+    .soft { background: var(--accent-soft); color: var(--accent); }
+    .danger { background: #8b1e3f; color: white; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      font-size: .86rem;
+      color: var(--muted);
+    }
+    .note { color: var(--muted); margin-top: 8px; font-size: .92rem; }
+    .upload {
+      padding: 14px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: white;
+    }
+    .hidden { display: none; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>AI 文章后台</h1>
+        <p class="note">保存、删文和上传图片后，站点会自动重建。</p>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="newBtn" type="button">新建文章</button>
+        <button class="ghost" id="refreshBtn" type="button">刷新列表</button>
+      </div>
+    </div>
+    <div class="grid">
+      <section class="panel">
+        <h2>文章列表</h2>
+        <div id="posts" class="posts"></div>
+      </section>
+      <section class="panel">
+        <div class="row">
+          <div class="field">
+            <label for="title">标题</label>
+            <input id="title">
+          </div>
+          <div class="field">
+            <label for="slug">Slug</label>
+            <input id="slug" placeholder="可留空，系统会自动生成">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="date">发布时间</label>
+            <input id="date" placeholder="2026-06-30T10:00:00+08:00">
+          </div>
+          <div class="field">
+            <label for="description">摘要</label>
+            <input id="description">
+          </div>
+        </div>
+        <div class="field upload">
+          <label>图片上传</label>
+          <div class="actions">
+            <input id="imageInput" class="hidden" type="file" accept="image/*">
+            <button class="soft" id="pickImageBtn" type="button">选择图片</button>
+            <button class="ghost" id="uploadImageBtn" type="button">上传并插入 Markdown</button>
+          </div>
+          <p class="note" id="imageHint">支持 png/jpg/webp/gif/svg。上传后会自动把图片链接插入正文光标位置。</p>
+        </div>
+        <div class="field">
+          <label for="body">Markdown 正文</label>
+          <textarea id="body"></textarea>
+        </div>
+        <div class="actions">
+          <button class="primary" id="saveBtn" type="button">保存文章</button>
+          <button class="danger" id="deleteBtn" type="button">删除文章</button>
+        </div>
+        <div class="field" style="margin-top: 16px;">
+          <label>构建日志</label>
+          <pre id="log">等待操作...</pre>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script>
+    const els = {
+      posts: document.getElementById('posts'),
+      title: document.getElementById('title'),
+      slug: document.getElementById('slug'),
+      date: document.getElementById('date'),
+      description: document.getElementById('description'),
+      body: document.getElementById('body'),
+      imageInput: document.getElementById('imageInput'),
+      imageHint: document.getElementById('imageHint'),
+      log: document.getElementById('log'),
+      saveBtn: document.getElementById('saveBtn'),
+      deleteBtn: document.getElementById('deleteBtn'),
+      newBtn: document.getElementById('newBtn'),
+      refreshBtn: document.getElementById('refreshBtn'),
+      pickImageBtn: document.getElementById('pickImageBtn'),
+      uploadImageBtn: document.getElementById('uploadImageBtn')
+    };
+
+    let currentSlug = '';
+
+    function setLog(text) {
+      els.log.textContent = text || '完成';
+    }
+
+    function defaultDate() {
+      return new Date().toISOString().slice(0, 19) + '+08:00';
+    }
+
+    function resetForm() {
+      currentSlug = '';
+      els.title.value = '';
+      els.slug.value = '';
+      els.date.value = defaultDate();
+      els.description.value = '';
+      els.body.value = '';
+      els.imageInput.value = '';
+      els.imageHint.textContent = '支持 png/jpg/webp/gif/svg。上传后会自动把图片链接插入正文光标位置。';
+      setLog('可以开始新建文章了');
+    }
+
+    async function req(url, options = {}) {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || '请求失败');
+      }
+      return data;
+    }
+
+    function insertAtCursor(text) {
+      const el = els.body;
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const before = el.value.slice(0, start);
+      const after = el.value.slice(end);
+      const needsBreakBefore = before && !before.endsWith('\n') ? '\n' : '';
+      const needsBreakAfter = after && !after.startsWith('\n') ? '\n' : '';
+      const insert = `${needsBreakBefore}${text}${needsBreakAfter}`;
+      el.value = before + insert + after;
+      const pos = before.length + insert.length;
+      el.focus();
+      el.setSelectionRange(pos, pos);
+    }
+
+    async function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('读取文件失败'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPosts(items) {
+      els.posts.innerHTML = '';
+      if (!items.length) {
+        els.posts.innerHTML = '<div class="post-item">还没有文章。</div>';
+        return;
+      }
+      for (const item of items) {
+        const div = document.createElement('div');
+        div.className = 'post-item';
+        div.innerHTML = `<strong>${item.title}</strong><div class="meta">${item.date || ''}</div><div class="meta">/${item.slug}/</div>`;
+        div.onclick = () => loadPost(item.slug);
+        els.posts.appendChild(div);
+      }
+    }
+
+    async function loadPosts() {
+      setLog('正在加载文章列表...');
+      const data = await req('./api/posts');
+      renderPosts(data.posts || []);
+      setLog('文章列表已刷新');
+    }
+
+    async function loadPost(slug) {
+      setLog('正在加载文章...');
+      const data = await req(`./api/posts/${encodeURIComponent(slug)}`);
+      currentSlug = data.slug;
+      els.title.value = data.title || '';
+      els.slug.value = data.slug || '';
+      els.date.value = data.date || '';
+      els.description.value = data.description || '';
+      els.body.value = data.body || '';
+      setLog(`已加载 ${slug}`);
+    }
+
+    async function savePost() {
+      setLog('正在保存并重建站点...');
+      const payload = {
+        slug: els.slug.value.trim() || currentSlug,
+        title: els.title.value.trim(),
+        date: els.date.value.trim(),
+        description: els.description.value.trim(),
+        body: els.body.value
+      };
+      const data = await req('./api/posts', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      currentSlug = data.slug;
+      els.slug.value = data.slug;
+      setLog(data.buildLog || '保存完成');
+      await loadPosts();
+    }
+
+    async function uploadImage() {
+      const file = els.imageInput.files[0];
+      if (!file) {
+        setLog('请先选择图片');
+        return;
+      }
+      setLog(`正在上传 ${file.name} 并重建站点...`);
+      const dataUrl = await readFileAsDataUrl(file);
+      const data = await req('./api/uploads', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: file.name,
+          contentType: file.type,
+          data: dataUrl
+        })
+      });
+      insertAtCursor(data.markdown);
+      els.imageHint.textContent = `已上传: ${data.url}`;
+      setLog(data.buildLog || '图片上传完成');
+    }
+
+    async function deletePost() {
+      const slug = (els.slug.value.trim() || currentSlug).trim();
+      if (!slug) {
+        setLog('请先选择要删除的文章');
+        return;
+      }
+      if (!confirm(`确认删除 ${slug} 吗？`)) {
+        return;
+      }
+      setLog('正在删除并重建站点...');
+      const data = await req(`./api/posts/${encodeURIComponent(slug)}`, {
+        method: 'DELETE'
+      });
+      setLog(data.buildLog || '删除完成');
+      resetForm();
+      await loadPosts();
+    }
+
+    els.saveBtn.onclick = () => savePost().catch(err => setLog(err.message));
+    els.deleteBtn.onclick = () => deletePost().catch(err => setLog(err.message));
+    els.newBtn.onclick = () => resetForm();
+    els.refreshBtn.onclick = () => loadPosts().catch(err => setLog(err.message));
+    els.pickImageBtn.onclick = () => els.imageInput.click();
+    els.uploadImageBtn.onclick = () => uploadImage().catch(err => setLog(err.message));
+    els.imageInput.onchange = () => {
+      const file = els.imageInput.files[0];
+      els.imageHint.textContent = file
+        ? `已选择: ${file.name}`
+        : '支持 png/jpg/webp/gif/svg。上传后会自动把图片链接插入正文光标位置。';
+    };
+
+    resetForm();
+    loadPosts().catch(err => setLog(err.message));
+  </script>
+</body>
+</html>

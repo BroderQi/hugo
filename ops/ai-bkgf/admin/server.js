@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { promises as fs } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { URL } from 'node:url';
 import { execFile } from 'node:child_process';
@@ -7,10 +8,20 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 const postsDir = '/opt/ai-blog/content/news';
+const uploadsDir = '/opt/ai-blog/static/uploads';
 const publicDir = '/opt/ai-blog-admin/public';
 const buildScript = '/opt/ai-blog/build.sh';
 const port = 8790;
 const nl = String.fromCharCode(10);
+const allowedUploadTypes = new Map([
+  ['image/apng', '.apng'],
+  ['image/avif', '.avif'],
+  ['image/gif', '.gif'],
+  ['image/jpeg', '.jpg'],
+  ['image/png', '.png'],
+  ['image/svg+xml', '.svg'],
+  ['image/webp', '.webp'],
+]);
 
 function json(res, status, payload) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -101,7 +112,7 @@ function renderPost(data) {
 
 async function rebuild() {
   const { stdout, stderr } = await execFileAsync(buildScript, { timeout: 120000 });
-  return `${stdout}${stderr}`.trim() || '站点重建完成';
+  return `${stdout}${stderr}`.trim() || 'Site rebuilt.';
 }
 
 async function listPosts() {
@@ -134,6 +145,63 @@ async function readJson(req) {
   return JSON.parse(raw);
 }
 
+function sanitizeName(name = '') {
+  return path
+    .basename(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function baseNameWithoutExt(name) {
+  const ext = path.extname(name);
+  return ext ? name.slice(0, -ext.length) : name;
+}
+
+function fileExt(name, contentType) {
+  const ext = path.extname(name || '').toLowerCase();
+  if (allowedUploadTypes.get(contentType) === ext) {
+    return ext;
+  }
+  return allowedUploadTypes.get(contentType) || '';
+}
+
+function decodeUpload(data = '') {
+  const raw = String(data);
+  const marker = ';base64,';
+  const idx = raw.indexOf(marker);
+  const payload = idx === -1 ? raw : raw.slice(idx + marker.length);
+  return Buffer.from(payload, 'base64');
+}
+
+async function saveUpload(data) {
+  const contentType = String(data.contentType || '').toLowerCase();
+  const ext = fileExt(data.name, contentType);
+  if (!ext) {
+    throw new Error('Only common image formats are supported.');
+  }
+
+  const body = decodeUpload(data.data);
+  if (!body.length) {
+    throw new Error('Upload body is empty.');
+  }
+
+  const sourceName = sanitizeName(data.name || '') || `image-${randomUUID()}`;
+  const stem = slugify(baseNameWithoutExt(sourceName)) || `image-${Date.now()}`;
+  const now = new Date();
+  const year = String(now.getUTCFullYear());
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const fileName = `${stem}-${Date.now()}${ext}`;
+  const absDir = path.join(uploadsDir, year, month);
+  const relPath = path.posix.join('uploads', year, month, fileName);
+  await fs.mkdir(absDir, { recursive: true });
+  await fs.writeFile(path.join(absDir, fileName), body);
+  return {
+    url: `/${relPath}`,
+    markdown: `![](/${relPath})`,
+  };
+}
+
 async function serveStatic(res, filePath) {
   const body = await fs.readFile(filePath);
   const ext = path.extname(filePath).toLowerCase();
@@ -158,7 +226,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname.startsWith('/api/posts/')) {
       const slug = slugify(decodeURIComponent(url.pathname.slice('/api/posts/'.length)));
       if (!slug) {
-        return json(res, 400, { error: '无效的 slug' });
+        return json(res, 400, { error: 'Invalid slug.' });
       }
       const raw = await fs.readFile(path.join(postsDir, `${slug}.md`), 'utf8');
       const parsed = parsePost(raw);
@@ -169,7 +237,7 @@ const server = createServer(async (req, res) => {
       const data = await readJson(req);
       const slug = slugOrFallback(data.slug, data.title);
       if (!(data.title || '').trim()) {
-        return json(res, 400, { error: '标题不能为空' });
+        return json(res, 400, { error: 'Title is required.' });
       }
       const post = {
         title: (data.title || '').trim(),
@@ -182,10 +250,17 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { ok: true, slug, buildLog });
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/uploads') {
+      const data = await readJson(req);
+      const upload = await saveUpload(data);
+      const buildLog = await rebuild();
+      return json(res, 200, { ok: true, ...upload, buildLog });
+    }
+
     if (req.method === 'DELETE' && url.pathname.startsWith('/api/posts/')) {
       const slug = slugify(decodeURIComponent(url.pathname.slice('/api/posts/'.length)));
       if (!slug) {
-        return json(res, 400, { error: '无效的 slug' });
+        return json(res, 400, { error: 'Invalid slug.' });
       }
       await fs.unlink(path.join(postsDir, `${slug}.md`));
       const buildLog = await rebuild();
@@ -196,9 +271,9 @@ const server = createServer(async (req, res) => {
     await serveStatic(res, path.join(publicDir, target));
   } catch (err) {
     if (err && err.code === 'ENOENT') {
-      return json(res, 404, { error: '未找到资源' });
+      return json(res, 404, { error: 'Not found.' });
     }
-    return json(res, 500, { error: err.message || '服务异常' });
+    return json(res, 500, { error: err.message || 'Server error.' });
   }
 });
 
